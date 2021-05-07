@@ -16,3 +16,4 @@ panic = "abort"
 panic = "abort"
 
 [dependencies]
+heapless = "0.6.0"

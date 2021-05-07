@@ -1,20 +1,18 @@
 #![no_std]
 #![no_main]
 
-#[allow(dead_code)]
+mod mach;
+mod raspi;
 
-mod mach {
+fn boot_entry() {
 
-    fn boot_entry() {
-        loop {}
-    }
+    use raspi::miniuart;
+    
+    miniuart::init(10);
 
-}
-
-use core::panic::PanicInfo;
-
-// Panic Handler
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+    miniuart::recv();
+    
     loop {}
+
 }
+
