@@ -1,3 +1,5 @@
-pub mod miniuart;
+//
+// Raspberry PI specific board drivers
+//
 
-pub use miniuart::*;
+pub mod miniuart;
