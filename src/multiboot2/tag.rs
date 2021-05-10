@@ -1,6 +1,6 @@
 
-mod EFI;
-mod String;
+mod efi;
+mod string;
 
 // 
 // Generic Multiboot2 Tag
