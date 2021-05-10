@@ -2,4 +2,4 @@
 // Raspberry PI specific board drivers
 //
 
-pub mod miniuart;
+pub mod peripherals;

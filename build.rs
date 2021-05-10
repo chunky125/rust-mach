@@ -18,6 +18,6 @@ fn main() {
         .warnings(true)
         .no_default_flags(false)
         // cc::build really does not want to detect the compiler automatically!
-        .compiler("aarch64-linux-gnu-gcc")
+        .compiler("aarch64-linux-gnu-gcc-8")
         .compile("boot");
 }
