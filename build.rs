@@ -2,17 +2,23 @@
 // Build script for GNU Mach in Rust Assembly files
 //
 
-use std::path::Path;
+use std::{env, error::Error, fs::File, io::Write, path::PathBuf, path::Path};
 
-fn main() {
+use cc::Build;
 
-    println!("cargo:rerun-if-changed=src/aarch64/boot.S");
+fn main() -> Result<(), Box<dyn Error>> {
+
+    let out_dir = PathBuf::from(env::var_os("OUT_DIR").unwrap());
+
+    println!("cargo:rustc-link-search={}",out_dir.display());
+
+    File::create(out_dir.join("ldscript"))?.write_all(include_bytes!("src/ldscript"))?;
 
     // Set the include path
     let include_path = Path::new("src/aarch64/include");
 
     // Build the ASM entry components
-    cc::Build::new()
+    Build::new()
         .file("src/aarch64/boot.S")
         .include(include_path)
         .warnings(true)
@@ -20,4 +26,9 @@ fn main() {
         // cc::build really does not want to detect the compiler automatically!
         .compiler("aarch64-linux-gnu-gcc")
         .compile("boot");
+
+    println!("cargo:rerun-if-changed=src/aarch64/boot.S");
+
+
+    Ok(())
 }

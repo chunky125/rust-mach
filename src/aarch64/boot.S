@@ -1,6 +1,6 @@
 #include "sysregs.h"
-//#include <mm.h>
-//#include <vm_param.h>
+#include "mm.h"
+#include "vm_param.h"
 #include "asm.h"
 
 /* For Multiboot2 defines */
@@ -49,6 +49,14 @@ end_tag_start:
 	.long	8
 multiboot2_header_end:
 
+preserve_cmdline_args:
+	
+	mov 	x21, x0
+	mov		x22, x1
+	mov		x23, x2
+	mov		x24, x3	
+	dmb		sy
+	ret	
 
 /*
  * Main Entry point
@@ -66,17 +74,6 @@ ENTRY(multiboot_entry)
 proc_wait:
 	wfi
 	b 	proc_wait
-
-preserve_cmdline_args:
-	
-	mov 	x21, x0
-	mov		x22, x1
-	mov		x23, x2
-	mov		x24, x3	
-
-	
-	dmb		sy
-	
 
 /*
  * Called on the first CPU core to init
@@ -150,11 +147,12 @@ el1_entry:
 	msr	CPACR_EL1, x6
 	isb
 
-	adr_l	x9,boot_args
-	stp		x21,x22,[x9]
-	stp		x23,x24,[x9,#16]
-	
-	/* Enter the kernel proper */
+	// Restore args
+	mov	x0,x21
+	mov	x1,x22
+	mov 	x2,x23
+	mov 	x3,x24
+
 	bl	boot_entry
 
 /*

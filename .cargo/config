@@ -2,4 +2,7 @@
 target = "aarch64-unknown-none"
 
 [target.aarch64-unknown-none]
-rustflags=["-C", "link-args=-Tsrc/aarch64/ldscript"]
+rustflags = [
+	"-C","link-arg=-Tldscript",
+	"-C","link-arg=-n"
+	]

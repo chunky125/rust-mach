@@ -7,9 +7,10 @@ mod raspi;
 
 //
 // Main entry point into the kernel from the ASM initialisation code
+// a, b, c and d are variables passed according to multiboot spec
 //
 #[no_mangle]
-fn boot_entry() {
+fn boot_entry(a: u64, b : u64, c : u64, d : u64) {
 
     use raspi::peripherals::miniuart;
 
@@ -18,8 +19,6 @@ fn boot_entry() {
 
     mu.init(br);
 
-    mu.send_string("Testing");
-  
     loop {
 
         mu.send(mu.recv());
