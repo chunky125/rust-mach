@@ -1,24 +1,20 @@
 //
 // Code to use the miniuart on the raspberry pi board
-// 
-
+//
 use core::ptr;
 
-
-pub struct MiniUART {
-}
+pub struct MiniUART {}
 
 pub enum BaudRate {
     BaudRate115200 = 270,
 }
 
-// 
+//
 // Memory structure
 //
 
 impl MiniUART {
-
-    // 
+    //
 
     // Registers
     //
@@ -45,10 +41,9 @@ impl MiniUART {
 
     //
     // Initialise the miniuart
-    // 
-    pub fn init(&self,baud : BaudRate) {
-
-        let mut selector : u32;
+    //
+    pub fn init(&self, baud: BaudRate) {
+        let mut selector: u32;
 
         unsafe {
             selector = ptr::read_volatile(Self::GPFSEL1);
@@ -62,7 +57,7 @@ impl MiniUART {
         unsafe {
             ptr::write_volatile(Self::GPFSEL1, selector);
 
-            ptr::write_volatile(Self::GPPUD,0);
+            ptr::write_volatile(Self::GPPUD, 0);
 
             ptr::write_volatile(Self::GPPUDCLK0, (1 << 14) | (1 << 15));
 
@@ -81,32 +76,28 @@ impl MiniUART {
             ptr::write_volatile(Self::AUX_MU_BAUD_REG, baud as u32);
 
             ptr::write_volatile(Self::AUX_MU_CNTL_REG, 3);
-
         }
+    }
 
-    }   
-
-    // 
+    //
     // Send a character
-    // 
-    pub fn send(&self, c : char) {
+    //
+    pub fn send(&self, c: u8) {
         unsafe {
-
             loop {
-                 if ptr::read_volatile(Self::AUX_MU_LSR_REG) & 0x20 > 0  {
+                if ptr::read_volatile(Self::AUX_MU_LSR_REG) & 0x20 > 0 {
                     break;
                 }
             }
 
-            ptr::write_volatile(Self::AUX_MU_IO_REG,c as u32);
+            ptr::write_volatile(Self::AUX_MU_IO_REG, c as u32);
         }
     }
 
     //
     // Receive a character
-    pub fn recv(&self) -> char {
+    pub fn recv(&self) -> u8 {
         unsafe {
-
             loop {
                 if ptr::read_volatile(Self::AUX_MU_LSR_REG) & 0x01 > 0 {
                     break;
@@ -114,22 +105,17 @@ impl MiniUART {
             }
 
             let trunc = ptr::read_volatile(Self::AUX_MU_IO_REG) as u8 & 0xFF;
-        
-            trunc as char        
+
+            trunc
         }
     }
 
-    // 
+    //
     // Send a string
     //
-    pub fn send_string(&self, s : &str) {
-        
-        let mut chars = s.chars();
-
-        for cc in chars.next() {
-           self.send(cc);
+    pub fn send_string(&self, s: &str) {
+        for c in s.chars() {
+            self.send(c as u8);
         }
-
     }
 }
-

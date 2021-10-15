@@ -83,10 +83,10 @@ proc_wait:
 master:
 	/* Clear BSS */
 	adr     x0, _bss_begin
-	mov			x1, xzr
+	mov	x1, xzr
 	adr     x2, _bss_end
 	sub     x2, x2, x0
-	bl      memset 
+	bl      memset_asm
 
 	mrs	x5,sctlr_EL2
 

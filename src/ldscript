@@ -16,30 +16,33 @@ SECTIONS
 
 	.text : 
 	{ 
-		*(.text) 
+		*(.text .text.*);
 	}
 	.ALIGN = (0x8);
 	
 	.rodata : 
 	{ 
-		*(.rodata) 
+		*(.rodata .rodata.*);
 	}
 	.ALIGN = (0x8);
 	
 	.data : 
 	{ 
-		*(.data) 
+		_data_start = .;
+		*(.data .data.*);
+		_data_end = .;
+		KEEP(*(.data .data.*));
 	}
 	. = ALIGN(0x8);
 	
-	_bss_begin = .;
 	.bss : 
-	{ 
-		*(.bss*) 
+	{
+		_bss_begin = .; 
+		*(.bss .bss.*);
+		_bss_end = .;
+		KEEP(*(.bss .bss.*));	
 	} 
 	.ALIGN = (0x8);
-	_bss_end = .;
-	_bss_size = _bss_end - _bss_begin;
 
 	_end = .;
 }

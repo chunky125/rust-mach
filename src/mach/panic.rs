@@ -2,7 +2,7 @@ mod mach {
 
     mod panic {
 
-       use core::panic::PanicInfo;
+        use core::panic::PanicInfo;
 
         // Panic Handler
         #[panic_handler]
