@@ -114,8 +114,8 @@ impl MiniUART {
     // Send a string
     //
     pub fn send_string(&self, s: &str) {
-        for c in s.chars() {
-            self.send(c as u8);
+        for b in s.bytes() {
+            self.send(b);
         }
     }
 }

@@ -1,37 +1,16 @@
-mod efi;
-mod string;
-
-//
-// Generic Multiboot2 Tag
-//
-#[repr(C)]
-pub struct Tag {
-    pub tag_type: u32,
-    pub tag_size: u32,
-}
-
-impl Tag {
-    pub fn new(addr: u64) -> Tag {
-        let new_type: *const u32 = addr as *const u32;
-        let new_size: *const u32 = (addr + 4) as *const u32;
-
-        unsafe {
-            Tag {
-                tag_type: *new_type,
-                tag_size: *new_size,
-            }
-        }
-    }
-}
-
 //
 // Enum for the tag type
 //
-enum Type {
-    End = 0,
-    CmdLine = 1,
-    BootLoaderName = 2,
-    Module = 3,
+//
+
+pub enum Type {
+    End { 
+    },
+    CmdLine { 
+    },
+    BootLoaderName {
+    },
+    /*Module = 3,
     BasicMemInfo = 4,
     BootDev = 5,
     Mmap = 6,
@@ -48,7 +27,30 @@ enum Type {
     EFIMmap = 17,
     EFIBootServices = 18,
     EFI32IH = 19,
-    EFI64IH = 20,
-    LoadBaseAddress = 21,
-    ELF64Sections = 22,
+    EFI64IH = 20, */
+    LoadBaseAddress {
+        base_address: u64,
+    },
+    ELF64Sections {
+        base_address: u64,
+    },
+}
+
+
+pub struct Tag {
+    tag_type: Type,
+    tag_size: u32,
+}
+
+impl Tag {
+    pub fn from_addr(addr : u64) -> Tag {
+
+        Tag::End{tag_type : 0, tag_size : 4}
+    }
+
+    pub fn size(&self) -> u32 {
+
+        self.tag_size
+    }
+
 }

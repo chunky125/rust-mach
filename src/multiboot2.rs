@@ -7,6 +7,8 @@
 
 mod tag;
 
+use tag::Tag;
+
 pub struct Multiboot2 {
     addr: u64,   // Pointer to rawdata in memory
     magic: u64,  // Magic number
@@ -49,9 +51,10 @@ impl Multiboot2 {
         // by the bootloader here, then we copy to the various places
         unsafe {
             while mb2currtagptr < init_addr + *mb2infosizeptr as u64 {
-                let currtag = tag::Tag::new(mb2currtagptr);
 
-                mb2currtagptr = mb2currtagptr + currtag.tag_size as u64;
+                let currtag : Tag = Tag::from_addr(mb2currtagptr);
+
+                mb2currtagptr = mb2currtagptr + (currtag.size() as u64);
             }
         }
 

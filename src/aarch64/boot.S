@@ -88,6 +88,29 @@ master:
 	sub     x2, x2, x0
 	bl      memset_asm
 
+	/* What EL are we at? */
+	mrs x0, CurrentEL
+	lsr x0, x0, #2
+	cmp x0, #3
+	blt el2_entry
+el3_entry:
+	msr sctlr_el2, xzr
+	msr hcr_el2, xzr
+	
+	mrs x0, SCR_EL3
+	orr x0, x0, #(1<<10) // Set EL2 Execution mode is aarch64
+	orr x0, x0, #(1<<0) // EL1 is non-secure
+	msr SCR_EL3, x0
+	mov x0, #0b01001 // DAIF=0000
+	msr SPSR_EL3, x0
+	
+	adr x0, el2_entry
+	msr ELR_EL3, x0
+
+	eret
+	
+el2_entry:
+
 	mrs	x5,sctlr_EL2
 
 	/* If we're already at EL1 - go there */
@@ -124,7 +147,7 @@ master:
 	/* Flush the dcache as we have 
 	 * disabled MMU and cache in EL1 */
 	mov x0, xzr
-	bl __asm_dcache_all
+	bl __asm_dcache_all 
 
 	eret
 

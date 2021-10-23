@@ -25,20 +25,14 @@ fn boot_entry(mbmagic: u64, mbinfoaddr: u64, _bootarg3: u64, _bootarg4: u64) {
     mu.init(br);
 
     // Say Hello!
-    mu.send_string("Rust Mach OS, initialising\r\n");
+    mu.send_string("\x1b[2JRust Mach OS, initialising\r\n");
 
     // Create a MB2 Information structure - this is a singleton
     use multiboot2::Multiboot2;
     let mbinfo: Multiboot2 = Multiboot2::create(mbinfoaddr, mbmagic);
 
     if mbinfo.valid() == true {
-        mu.send('M' as u8);
-        mu.send('B' as u8);
-        mu.send('2' as u8);
-        mu.send('O' as u8);
-        mu.send('K' as u8);
-        mu.send('\r' as u8);
-        mu.send('\n' as u8);
+        mu.send_string("Multiboot2 Info is Valid\r\n");
     }
 
     // Start the Kernel itself
