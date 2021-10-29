@@ -5,8 +5,6 @@ mod mach;
 mod multiboot2;
 mod raspi;
 
-use core::ptr;
-
 //
 // Main entry point into the kernel from the ASM initialisation code
 // mbmagic should be the bootloader magic, mbinfoaddr is the address of
