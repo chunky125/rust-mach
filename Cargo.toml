@@ -14,3 +14,6 @@ panic = "abort"
 
 [profile.release]
 panic = "abort"
+
+[dependencies]
+heapless = "0.7.0"
