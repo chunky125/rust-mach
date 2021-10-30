@@ -7,6 +7,8 @@
 use heapless::{Vec,String};
 
 /// Structure for Elf Section Table Entry
+#[repr (C)]
+#[derive (Clone,Copy)]
 pub struct ELFSectionEntry {
     section_name_addr : u32,
     section_type : u32,
@@ -20,10 +22,15 @@ pub struct ELFSectionEntry {
 }
 
 /// Structure for memory map entry
+/// Mirrors Multiboot structure to simplify creation
+
+#[repr (C)]
+#[derive (Clone,Copy)]
 pub struct MMapEntry {
     base_addr : u64,
     length : u64,
     region_type : u32,
+    pad : u32,
 }
 
 /// Enum for the tag type
@@ -81,6 +88,9 @@ pub enum Tag {
 }
 
 impl Tag {
+
+    /// Generate a new tag from a memory address, which must be 
+    /// aligned to an 8 byte boundary
     pub fn from_addr(tag_base_addr : u64) -> Tag {
         unsafe {
             let new_size : u32 = *((tag_base_addr + 4) as *const u32);
@@ -127,23 +137,15 @@ impl Tag {
                     let mmap_entry_count = *((tag_base_addr + 12) as *const u32);
                     let mut mmap_table = Vec::<MMapEntry,10>::new();
 
-                    let mut mmap_curr_addr = tag_base_addr + 16;
-
-                    while mmap_curr_addr < 
-                        tag_base_addr + 16 + (mmap_entry_size * mmap_entry_count) as u64 {
-                        let new_entry = MMapEntry { 
-                            base_addr : *(mmap_curr_addr as *const u64),
-                            length : *((mmap_curr_addr + 8) as *const u64),
-                            region_type : *((mmap_curr_addr + 16) as *const u32),
-                        };
-                        
-                        let push_result = mmap_table.push(new_entry);
+                    let mut mmap_curr = (tag_base_addr + 16) as *const MMapEntry;
+                    
+                    for i in 0..mmap_entry_count as isize {
+                        let push_result = mmap_table.push(*(mmap_curr.offset(i)));
 
                         if push_result.is_err() {
                             panic!();
                         }
 
-                        mmap_curr_addr += mmap_entry_size as u64;
                     }
                         
                     Tag::Mmap {
@@ -179,6 +181,16 @@ impl Tag {
                 // ELF64 Headers
                 22 => {
                     let new_table = Vec::<ELFSectionEntry,10>::new();
+                    let entry : u64 = tag_base_addr + 16;
+                    let count : u16 = 
+                        *((tag_base_addr + 8) as *const u16);
+                    let entry_size : u16 = 
+                        *((tag_base_addr + 12) as *const u16);
+
+                    while entry < 
+                        (tag_base_addr + 16 + (count * entry_size) as u64) {
+
+                        }
 
                     Tag::ELF64Sections {
                         tag_size : new_size,
