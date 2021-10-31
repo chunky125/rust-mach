@@ -181,7 +181,7 @@ impl Tag {
                 // ELF64 Headers
                 22 => {
                     let new_table = Vec::<ELFSectionEntry,10>::new();
-                    let entry : u64 = tag_base_addr + 16;
+                    let mut entry : u64 = tag_base_addr + 16;
                     let count : u16 = 
                         *((tag_base_addr + 8) as *const u16);
                     let entry_size : u16 = 
@@ -189,8 +189,8 @@ impl Tag {
 
                     while entry < 
                         (tag_base_addr + 16 + (count * entry_size) as u64) {
-
-                        }
+                        entry = entry + entry_size as u64;
+                    }
 
                     Tag::ELF64Sections {
                         tag_size : new_size,

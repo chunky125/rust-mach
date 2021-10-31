@@ -83,6 +83,9 @@ impl Multiboot2Info {
         CurrentMultiboot2Info.status
     }
 
-
+    /// Return the current status
+    pub fn status() -> Multiboot2Status {
+        CurrentMultiboot2Info.status
+    }
 }
 
