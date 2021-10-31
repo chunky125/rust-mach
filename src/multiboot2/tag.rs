@@ -181,6 +181,7 @@ impl Tag {
                 
                 // ELF64 Headers
                 22 => {
+<<<<<<< HEAD
                     assert_eq!(*((tag_base_addr + 12) as *const u16) as usize,size_of::<ELFSectionEntry>());
 
                     let mut elf_table = Vec::<ELFSectionEntry,20>::new();
@@ -194,6 +195,19 @@ impl Tag {
                         if push_result.is_err() {
                             panic!();
                         }
+=======
+                    let new_table = Vec::<ELFSectionEntry,10>::new();
+                    let mut entry : u64 = tag_base_addr + 16;
+                    let count : u16 = 
+                        *((tag_base_addr + 8) as *const u16);
+                    let entry_size : u16 = 
+                        *((tag_base_addr + 12) as *const u16);
+
+                    while entry < 
+                        (tag_base_addr + 16 + (count * entry_size) as u64) {
+                        entry = entry + entry_size as u64;
+                    }
+>>>>>>> 3c2fcf9732d5d71140624f8eed09a8b118dd44bc
 
                     }
                         

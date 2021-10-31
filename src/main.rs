@@ -27,13 +27,13 @@ fn boot_entry(mbmagic: u64, mbinfoaddr: u64, _bootarg3: u64, _bootarg4: u64) {
 
     // Create a MB2 Information structure - this is a singleton - how to implement it!
     use multiboot2::*;
-    let mbinfo: Multiboot2 = Multiboot2::create(mbinfoaddr, mbmagic);
 
-    if mbinfo.status == Multiboot2Status::Multiboot2StatusValid {
+    unsafe {
+        if Multiboot2Info::init(mbinfoaddr, mbmagic) == Multiboot2Status::Multiboot2StatusValid {
 
-        mu.send_string("Multiboot2 Info is Valid\r\n");
+            mu.send_string("Multiboot2 Info is Valid\r\n");
 
-        if mbinfo.tags.is_some() {
+/*        if mbinfo.tags.is_some() {
             for mb2tag in mbinfo.tags.unwrap() {
 
                 use multiboot2::tag::Tag;
@@ -59,6 +59,7 @@ fn boot_entry(mbmagic: u64, mbinfoaddr: u64, _bootarg3: u64, _bootarg4: u64) {
                     }
                 }
             }
+        } */
         }
     }
 
