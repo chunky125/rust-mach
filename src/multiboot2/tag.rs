@@ -5,8 +5,10 @@
 //
 
 use heapless::{Vec,String};
+use core::mem::size_of;
 
 /// Structure for Elf Section Table Entry
+/// Mirrors ELF section headers to simplify creation
 #[repr (C)]
 #[derive (Clone,Copy)]
 pub struct ELFSectionEntry {
@@ -23,7 +25,6 @@ pub struct ELFSectionEntry {
 
 /// Structure for memory map entry
 /// Mirrors Multiboot structure to simplify creation
-
 #[repr (C)]
 #[derive (Clone,Copy)]
 pub struct MMapEntry {
@@ -80,7 +81,7 @@ pub enum Tag {
     },
     ELF64Sections {
         tag_size : u32,
-        table : Vec<ELFSectionEntry, 10>,
+        table : Vec<ELFSectionEntry, 20>,
     },
     Unknown {
         tag_size : u32,
@@ -133,11 +134,11 @@ impl Tag {
 
                 // Memory Map
                 6 => {
-                    let mmap_entry_size = *((tag_base_addr + 8) as *const u32);
+                    assert_eq!( *((tag_base_addr + 8) as *const u32) as usize,size_of::<MMapEntry>());
                     let mmap_entry_count = *((tag_base_addr + 12) as *const u32);
                     let mut mmap_table = Vec::<MMapEntry,10>::new();
 
-                    let mut mmap_curr = (tag_base_addr + 16) as *const MMapEntry;
+                    let mmap_curr = (tag_base_addr + 16) as *const MMapEntry;
                     
                     for i in 0..mmap_entry_count as isize {
                         let push_result = mmap_table.push(*(mmap_curr.offset(i)));
@@ -180,21 +181,25 @@ impl Tag {
                 
                 // ELF64 Headers
                 22 => {
-                    let new_table = Vec::<ELFSectionEntry,10>::new();
-                    let entry : u64 = tag_base_addr + 16;
-                    let count : u16 = 
+                    assert_eq!(*((tag_base_addr + 12) as *const u16) as usize,size_of::<ELFSectionEntry>());
+
+                    let mut elf_table = Vec::<ELFSectionEntry,20>::new();
+                    let entry = (tag_base_addr + 16) as *const ELFSectionEntry;
+                    let count = 
                         *((tag_base_addr + 8) as *const u16);
-                    let entry_size : u16 = 
-                        *((tag_base_addr + 12) as *const u16);
+                                            
+                    for i in 0..count as isize {
+                        let push_result = elf_table.push(*(entry.offset(i)));
 
-                    while entry < 
-                        (tag_base_addr + 16 + (count * entry_size) as u64) {
-
+                        if push_result.is_err() {
+                            panic!();
                         }
 
+                    }
+                        
                     Tag::ELF64Sections {
                         tag_size : new_size,
-                        table : new_table,
+                        table : elf_table,
                     }
                 }
                 
@@ -209,6 +214,7 @@ impl Tag {
         }
     }
 
+    /// Return the size of the tag
     pub fn size(&self) -> u32 {
 
         match self {
@@ -227,6 +233,7 @@ impl Tag {
         }
     }
 
+    /// Get the align, aligned size of the tag
     pub fn size_align(&self, align : u32) -> u32 {
         
         (self.size() + (align - 1)) & !(align-1)

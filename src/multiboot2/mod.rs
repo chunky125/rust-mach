@@ -4,9 +4,10 @@
 // (c) Chris Plant 2021
 //
 
-use heapless::{Vec,String};
+use heapless::{Vec};
 
 pub mod tag;
+pub mod efi;
 
 use tag::Tag;
 
