@@ -1,6 +1,7 @@
 //
 // Code to use the miniuart on the raspberry pi board
 //
+use crate::mach::logger::LoggingDevice;
 use core::ptr;
 
 pub struct MiniUART {}
@@ -12,7 +13,6 @@ pub enum BaudRate {
 //
 // Memory structure
 //
-
 impl MiniUART {
     //
 
@@ -116,6 +116,18 @@ impl MiniUART {
     pub fn send_string(&self, s: &str) {
         for b in s.bytes() {
             self.send(b);
+        }
+    }
+}
+
+///
+/// Implement the logging device trait
+///
+impl LoggingDevice for MiniUART {
+    // Implement the write trait
+    fn write(&mut self, buf: &[u8]) -> () {
+        for b in buf {
+            self.send(*b)
         }
     }
 }

@@ -1,7 +1,8 @@
 #![no_std]
 #![no_main]
 
-mod mach;
+mod hardware;
+pub mod mach;
 mod multiboot2;
 mod raspi;
 
@@ -15,7 +16,14 @@ mod raspi;
 //
 #[no_mangle]
 fn boot_entry(mbmagic: u64, mbinfoaddr: u64, _bootarg3: u64, _bootarg4: u64) {
+    use hardware::Hardware;
+    use multiboot2::{Multiboot2Info, Multiboot2Status};
     use raspi::peripherals::miniuart;
+
+    // Create the state variables
+    let multiboot2_info: Multiboot2Info;
+    let mut hardware: Hardware;
+    let mach: mach::Mach = mach::Mach::new();
 
     // Initialise the serial port
     let mu = miniuart::MiniUART {};
@@ -25,44 +33,84 @@ fn boot_entry(mbmagic: u64, mbinfoaddr: u64, _bootarg3: u64, _bootarg4: u64) {
     // Say Hello!
     mu.send_string("\x1b[2JRust Mach OS, initialising\r\n");
 
-    // Create a MB2 Information structure - this is a singleton - how to implement it!
-    use multiboot2::*;
-
+    // Create a MB2 Information structure
     unsafe {
-        if Multiboot2Info::init(mbinfoaddr, mbmagic) == Multiboot2Status::Multiboot2StatusValid {
+        let multiboot2_info = multiboot2::from_addr(mbinfoaddr, mbmagic);
 
+        if multiboot2_info.status == Multiboot2Status::Valid {
             mu.send_string("Multiboot2 Info is Valid\r\n");
 
-/*        if mbinfo.tags.is_some() {
-            for mb2tag in mbinfo.tags.unwrap() {
+            if multiboot2_info.tags.is_some() {
+                for mb2tag in multiboot2_info.tags.unwrap() {
+                    use multiboot2::tag::Tag;
 
-                use multiboot2::tag::Tag;
+                    match mb2tag {
+                        Tag::CmdLine { value, .. } => {
+                            use core::fmt::Write;
+                            use heapless::String;
 
-                match mb2tag {
+                            let mut cmdline_text: String<128> = String::<128>::new();
 
-                    Tag::CmdLine {value, .. } => {
-                        mu.send_string("Found Command Line MB2 Tag\r\n");
-                    }
+                            if writeln!(cmdline_text, "Command line is {}\r\n", value).is_ok() {
+                                mu.send_string(&cmdline_text);
+                            }
+                        }
 
-                    Tag::EFI64SystemTable{addr, .. } => {
-                        use heapless::String;
-                        use core::fmt::Write;
+                        Tag::BootLoaderName { name, .. } => {
+                            use core::fmt::Write;
+                            use heapless::String;
 
-                        let mut systab_text : String::<128> = String::<128>::new();
+                            let mut bootloader_text: String<128> = String::<128>::new();
 
-                        writeln!(systab_text,"EFI System table is at {:x}\r\n", addr);
+                            if writeln!(bootloader_text, "Bootloader name is {}\r\n", name).is_ok()
+                            {
+                                mu.send_string(&bootloader_text);
+                            }
+                        }
 
-                        mu.send_string(&systab_text);
-                    }
+                        Tag::EFI64SystemTable { addr, .. } => {
+                            use core::fmt::Write;
+                            use heapless::String;
 
-                    _ => {
+                            let mut systab_text: String<128> = String::<128>::new();
+
+                            if writeln!(systab_text, "EFI System table is at 0x{:x}\r\n", addr)
+                                .is_ok()
+                            {
+                                mu.send_string(&systab_text);
+                            }
+
+                            // Try to make EFI work
+                            let hardware = hardware::create_from_efi_systab(addr);
+                        }
+
+                        Tag::ELF64Sections { table, .. } => {
+                            for sheader in table {
+                                use core::fmt::Write;
+                                use heapless::String;
+
+                                let mut sheader_text: String<128> = String::<128>::new();
+
+                                if writeln!(
+                                    sheader_text,
+                                    "Section Header, Type {:?}, at 0x{:x}, with length 0x{:x}\r\n",
+                                    sheader.section_type,
+                                    sheader.section_addr,
+                                    sheader.section_size
+                                )
+                                .is_ok()
+                                {
+                                    mu.send_string(&sheader_text);
+                                }
+                            }
+                        }
+
+                        _ => {}
                     }
                 }
             }
-        } */
         }
     }
-
 
     // Start the Kernel itself
     loop {
