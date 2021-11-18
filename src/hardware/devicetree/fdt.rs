@@ -1,4 +1,7 @@
 use heapless::{String, Vec};
+use super::DeviceTreeNode;
+
+/// Macro to convert u32 value from FDT big endian to little endian
 
 /// The FDT Header Structure
 #[repr(C)]
@@ -38,7 +41,9 @@ struct Property {
 }
 
 pub struct FDT {
+    base_addr : u64,
     header : Header,
+    curr_node : u64,
 }
 
 impl FDT {
@@ -47,14 +52,40 @@ impl FDT {
     pub unsafe fn from_fdt_addr(addr : u64) -> Option<FDT> {
         
         let new_fdt = FDT {
+            base_addr : addr,
             header : *(addr as *const Header),
+            curr_node : 0,
         };
 
         if new_fdt.header.magic != FDT_MAGIC_NUMBER {
             return None;
         }
 
+        if new_fdt.header.version < 10 {
+            return None;
+        }
+
         Some(new_fdt)
+
+    }
+
+  
+    pub unsafe fn get_next_node(&mut self) -> Option<DeviceTreeNode> {
+
+        if self.curr_node == 0 {
+            
+            // Go to the start
+            self.curr_node = self.base_addr + self.header.offset_dt_struct as u64;
+
+            // Get Node Number (Big Endian!!!)
+            let node_type = *(self.curr_node as (*const u32));
+
+        } else {
+            // Start from point
+            
+        }
+
+        None
 
     }
 }
