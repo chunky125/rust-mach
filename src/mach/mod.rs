@@ -1,4 +1,5 @@
 pub mod logger;
+pub mod allocator;
 mod panic;
 
 use logger::Logger;

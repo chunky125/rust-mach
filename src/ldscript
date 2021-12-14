@@ -37,5 +37,13 @@ SECTIONS
 	} 
 	.ALIGN = (0x1000);
 
+	.heap :
+	{
+		_heap_start = .;
+		. = ALIGN(4096);
+		.= . + 0x10000;
+		_heap_end = .;
+	}
+
 	_end = .;
 }

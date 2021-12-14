@@ -1,10 +1,15 @@
 #![no_std]
 #![no_main]
+#![feature(alloc_error_handler)]
+#![feature(alloc)]
+
 
 mod hardware;
 pub mod mach;
 mod multiboot2;
 mod raspi;
+
+extern crate alloc;
 
 //
 // Main entry point into the kernel from the ASM initialisation code
@@ -15,10 +20,13 @@ mod raspi;
 // not using them and neither is GRUB
 //
 #[no_mangle]
-fn boot_entry(mbmagic: u64, mbinfoaddr: u64, _bootarg3: u64, _bootarg4: u64) {
+unsafe fn boot_entry(mbmagic: u64, mbinfoaddr: u64, _bootarg3: u64, _bootarg4: u64) {
     use hardware::Hardware;
     use multiboot2::{Multiboot2Info, Multiboot2Status};
     use raspi::peripherals::miniuart;
+    
+    // Initialise the allocator
+    mach::allocator::init_early_alloc();
 
     // Create the state variables
     let multiboot2_info: Multiboot2Info;
@@ -34,7 +42,6 @@ fn boot_entry(mbmagic: u64, mbinfoaddr: u64, _bootarg3: u64, _bootarg4: u64) {
     mu.send_string("\x1b[2JRust Mach OS, initialising\r\n");
 
     // Create a MB2 Information structure
-    unsafe {
         let multiboot2_info = multiboot2::from_addr(mbinfoaddr, mbmagic);
 
         if multiboot2_info.status == Multiboot2Status::Valid {
@@ -58,9 +65,9 @@ fn boot_entry(mbmagic: u64, mbinfoaddr: u64, _bootarg3: u64, _bootarg4: u64) {
 
                         Tag::BootLoaderName { name, .. } => {
                             use core::fmt::Write;
-                            use heapless::String;
+                            use alloc::string::String;
 
-                            let mut bootloader_text: String<128> = String::<128>::new();
+                            let mut bootloader_text = String::new();
 
                             if writeln!(bootloader_text, "Bootloader name is {}\r\n", name).is_ok()
                             {
@@ -70,9 +77,9 @@ fn boot_entry(mbmagic: u64, mbinfoaddr: u64, _bootarg3: u64, _bootarg4: u64) {
 
                         Tag::EFI64SystemTable { addr, .. } => {
                             use core::fmt::Write;
-                            use heapless::String;
+                            use alloc::string::String;
 
-                            let mut systab_text: String<128> = String::<128>::new();
+                            let mut systab_text = String::new();
 
                             if writeln!(systab_text, "EFI System table is at 0x{:x}\r\n", addr)
                                 .is_ok()
@@ -87,9 +94,9 @@ fn boot_entry(mbmagic: u64, mbinfoaddr: u64, _bootarg3: u64, _bootarg4: u64) {
                         Tag::ELF64Sections { table, .. } => {
                             for sheader in table {
                                 use core::fmt::Write;
-                                use heapless::String;
+                                use alloc::string::String;
 
-                                let mut sheader_text: String<128> = String::<128>::new();
+                                let mut sheader_text = String::new();
 
                                 if writeln!(
                                     sheader_text,
@@ -110,7 +117,6 @@ fn boot_entry(mbmagic: u64, mbinfoaddr: u64, _bootarg3: u64, _bootarg4: u64) {
                 }
             }
         }
-    }
 
     // Start the Kernel itself
     loop {
